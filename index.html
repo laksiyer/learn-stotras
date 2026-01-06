@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="sa">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Learn Stotras — अभ्यास उपकरणम्</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <!-- will be replaced by stotra title -->
+      <div class="brandTitle" id="brandTitle">Learn Stotras</div>
+      <div class="brandSub" id="brandSub">पद → द्विपद → श्लोक अभ्यासः</div>
+    </div>
+
+    <div class="topControls">
+      <!-- NEW: Stotra selector -->
+      <div class="controlGroup">
+        <label for="stotraSelect">Stotra</label>
+        <select id="stotraSelect" class="select"></select>
+      </div>
+
+      <div class="controlGroup">
+        <label for="themeSelect">Theme</label>
+        <select id="themeSelect" class="select">
+          <option value="dark">Default (Dark)</option>
+          <option value="light">Light (Paper)</option>
+          <option value="contrast">High Contrast</option>
+          <option value="cb">Color-blind Safe</option>
+          <option value="sepia">Sepia</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- LEFT PANEL -->
+    <section class="panel left">
+      <div class="verseNav">
+        <button id="prevVerse" class="navBtn" title="Previous verse">‹</button>
+
+        <div class="versePicker">
+          <div class="labelSmall">Verse</div>
+          <select id="verseSelect" class="select"></select>
+        </div>
+
+        <button id="nextVerse" class="navBtn" title="Next verse">›</button>
+      </div>
+
+      <div class="meter" id="meterBox">—</div>
+
+      <div class="controlBlock">
+        <div class="controlRow">
+          <label for="practiceSet">Practice set (optional)</label>
+          <input id="practiceSet" class="input" placeholder="e.g. 1-10, 12, 18-20 or 1,7,8" />
+        </div>
+
+        <div class="controlRow tight">
+          <button id="applySet" class="btn ghost">Apply</button>
+          <button id="clearSet" class="btn ghost">Clear</button>
+        </div>
+
+        <div id="setIndicator" class="hint"></div>
+      </div>
+
+      <div class="controlBlock">
+        <div class="sliderRow">
+          <div class="sliderLabel">Pāda repeat</div>
+          <div class="badge" id="repSingleVal">1×</div>
+        </div>
+        <input id="repSingle" type="range" min="0" max="8" value="2" />
+      </div>
+
+      <div class="controlBlock">
+        <div class="sliderRow">
+          <div class="sliderLabel">Pair repeat (P1+P2, P3+P4)</div>
+          <div class="badge" id="repPairsVal">0×</div>
+        </div>
+        <input id="repPairs" type="range" min="0" max="8" value="0" />
+      </div>
+
+      <div class="controlBlock">
+        <div class="sliderRow">
+          <div class="sliderLabel">Full verse repeat</div>
+          <div class="badge" id="repFullVal">0×</div>
+        </div>
+        <input id="repFull" type="range" min="0" max="8" value="0" />
+      </div>
+
+      <div class="controlBlock">
+        <div class="sliderRow">
+          <div class="sliderLabel">Speed</div>
+          <div class="badge" id="speedVal">1.00×</div>
+        </div>
+        <input id="speed" type="range" min="0.70" max="1.50" step="0.01" value="1.15" />
+      </div>
+
+      <div class="controlBlock">
+        <div class="row">
+          <label class="checkbox">
+            <input id="usePractice" type="checkbox" checked />
+            <span>Practice text</span>
+          </label>
+
+          <div class="miniBox">
+            <div class="miniLabel">Total plays this run</div>
+            <div class="miniValue" id="totalPlays">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="startBtn" class="btn primary">Start Practice</button>
+        <button id="stopBtn" class="btn">Stop</button>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL -->
+    <section class="panel right">
+      <div class="line fullLine" id="fullLine">—</div>
+
+      <div class="padas">
+        <div class="line pada" id="pada1"></div>
+        <div class="line pada" id="pada2"></div>
+        <div class="line pada" id="pada3"></div>
+        <div class="line pada" id="pada4"></div>
+      </div>
+
+      <div class="singles" id="singleButtons">
+        <button id="playP1" class="btn chip">P1</button>
+        <button id="playP2" class="btn chip">P2</button>
+        <button id="playP3" class="btn chip">P3</button>
+        <button id="playP4" class="btn chip">P4</button>
+      </div>
+
+      <div class="pairs">
+        <button id="playP12" class="btn chip">P1+P2</button>
+        <button id="playP34" class="btn chip">P3+P4</button>
+        <button id="playFull" class="btn chip">Full</button>
+      </div>
+
+      <div class="glossRow">
+        <div class="gloss sa" id="arthaSa"></div>
+        <div class="gloss en" id="meaningEn"></div>
+      </div>
+
+      <div class="status" id="status">Ready.</div>
+
+      <audio id="player" preload="auto"></audio>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+
+  <footer class="footer">
+    Created by Samskritabharati, USA
+  </footer>
+</body>
+</html>

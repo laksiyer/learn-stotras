@@ -1,0 +1,8 @@
+{
+  "id": "vishnu-sahasranama",
+  "title": "विष्णुसहस्रनामम्",
+  "subtitle": "पद → द्विपद → श्लोक अभ्यासः",
+  "versesPath": "stotras/vishnu-sahasranama/data/verses.json",
+  "audioBase": "stotras/vishnu-sahasranama/audio",
+  "themeKey": "learnstotras_theme"
+}
