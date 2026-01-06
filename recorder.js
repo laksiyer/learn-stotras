@@ -256,6 +256,15 @@ async function startRecording(takeKey) {
   chunks = [];
   recordingKey = takeKey;
 
+  // Visual recording indicator
+const card = els.takeGrid.querySelector(`[data-take="${takeKey}"]`);
+if (card) {
+  const recBtn = card.querySelector(`button[data-action="record"]`);
+  const stopBtn = card.querySelector(`button[data-action="stop"]`);
+  recBtn.classList.add("recording");
+  stopBtn.classList.add("stop-active");
+}
+
   recorder = new MediaRecorder(stream, { mimeType: mime });
   recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
 
@@ -273,11 +282,19 @@ async function startRecording(takeKey) {
     chunks = [];
 
     setStatus(`Recorded ${takeKey} for ${currentVerse.id}.`);
-    refreshTakeUI();
+    // Clear recording indicator
+const cards = els.takeGrid.querySelectorAll(".take");
+cards.forEach(card => {
+  card.querySelectorAll(".btn").forEach(b => {
+    b.classList.remove("recording", "stop-active");
+  });
+});
+
+	refreshTakeUI();
   };
 
   recorder.start();
-  setStatus(`Recording ${takeKey}…`);
+setStatus(`● Recording ${takeKey.toUpperCase()} — press Stop to finish`);
   refreshTakeUI();
 }
 
