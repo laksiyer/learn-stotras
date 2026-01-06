@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Recorder Cockpit — Learn Stotras</title>
+  <link rel="stylesheet" href="recorder.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="title">Recorder Cockpit</div>
+      <div class="sub">Record P1/P2/P3/P4, P12, P34, Full • Export ZIP</div>
+    </div>
+    <div class="actions">
+      <a class="link" href="./">← Back to Player</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <div class="row">
+        <label class="control">
+          <span>Stotra</span>
+          <select id="stotraSelect"></select>
+        </label>
+
+        <label class="control">
+          <span>Verse</span>
+          <select id="verseSelect"></select>
+        </label>
+
+        <button id="prevVerse" class="btn">Prev</button>
+        <button id="nextVerse" class="btn">Next</button>
+      </div>
+
+      <div class="verseBox">
+        <div class="verseMeta">
+          <div id="verseId" class="badge">—</div>
+          <div id="verseTitle" class="muted">—</div>
+        </div>
+        <div id="verseFull" class="verseFull">—</div>
+
+        <div class="padas">
+          <div class="pada"><div class="pLabel">P1</div><div id="p1" class="pText">—</div></div>
+          <div class="pada"><div class="pLabel">P2</div><div id="p2" class="pText">—</div></div>
+          <div class="pada"><div class="pLabel">P3</div><div id="p3" class="pText">—</div></div>
+          <div class="pada"><div class="pLabel">P4</div><div id="p4" class="pText">—</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row">
+        <label class="control">
+          <span>Input device</span>
+          <select id="micSelect"></select>
+        </label>
+
+        <label class="control">
+          <span>Format</span>
+          <select id="formatSelect">
+            <option value="audio/webm">webm (default, good)</option>
+            <option value="audio/ogg">ogg (if supported)</option>
+          </select>
+        </label>
+
+        <label class="control">
+          <span>Auto-trim</span>
+          <select id="trimSelect">
+            <option value="none">None</option>
+            <option value="basic">Basic (remove leading/trailing silence-ish)</option>
+          </select>
+        </label>
+
+        <div class="meter">
+          <div class="muted">Mic level</div>
+          <div class="bar"><div id="meterFill" class="fill"></div></div>
+        </div>
+      </div>
+
+      <div class="grid" id="takeGrid"></div>
+
+      <div class="row footerRow">
+        <div class="muted" id="status">Ready.</div>
+        <button id="exportZip" class="btn primary">Export Verse ZIP</button>
+        <button id="clearVerse" class="btn">Clear This Verse</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- JSZip for zip export -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="recorder.js"></script>
+</body>
+</html>
