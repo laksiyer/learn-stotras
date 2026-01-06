@@ -168,3 +168,25 @@ select{
   .grid{ grid-template-columns: 1fr; }
   select{ min-width: 240px; }
 }
+/* ===== Recording state ===== */
+
+.btn.recording {
+  background: #b91c1c;           /* deep red */
+  border-color: #ef4444;
+  color: #fff;
+  font-weight: 700;
+  animation: pulse 1.2s infinite;
+}
+
+.btn.stop-active {
+  background: #7c2d12;           /* darker stop color */
+  border-color: #f97316;
+  color: #fff;
+  font-weight: 700;
+}
+
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(239,68,68,.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
+  100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+}
