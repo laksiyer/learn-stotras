@@ -227,23 +227,23 @@
       "p4": ""
     },
     "practice": {
-      "p1": "ॐ नमो विष्णवे प्रभविष्णवे । श्री वैशम्पायन उवाच",
+      "p1": "",
       "p2": "",
       "p3": "",
       "p4": ""
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": true,
-      "p34": true
+      "p12": false,
+      "p34": false
     },
     "audio": {
       "p1": "vsn_007_p1.mp3",
       "p2": "vsn_007_p2.mp3",
       "p3": "vsn_007_p3.mp3",
       "p4": "vsn_007_p4.mp3",
-      "p12": "vsn_007_p12.mp3",
-      "p34": "vsn_007_p34.mp3",
+      "p12": null,
+      "p34": null,
       "full": "vsn_007_full.mp3"
     },
     "gloss": {
@@ -306,16 +306,16 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": true,
-      "p34": true
+      "p12": false,
+      "p34": false
     },
     "audio": {
       "p1": "vsn_009_p1.mp3",
       "p2": "vsn_009_p2.mp3",
       "p3": "vsn_009_p3.mp3",
       "p4": "vsn_009_p4.mp3",
-      "p12": "vsn_009_p12.mp3",
-      "p34": "vsn_009_p34.mp3",
+      "p12": null,
+      "p34": null,
       "full": "vsn_009_full.mp3"
     },
     "gloss": {
@@ -414,16 +414,16 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": true,
-      "p34": true
+      "p12": false,
+      "p34": false
     },
     "audio": {
       "p1": "vsn_012_p1.mp3",
       "p2": "vsn_012_p2.mp3",
       "p3": "vsn_012_p3.mp3",
       "p4": "vsn_012_p4.mp3",
-      "p12": "vsn_012_p12.mp3",
-      "p34": "vsn_012_p34.mp3",
+      "p12": null,
+      "p34": null,
       "full": "vsn_012_full.mp3"
     },
     "gloss": {
