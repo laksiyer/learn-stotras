@@ -1,111 +1,129 @@
 // app.js — Learn Stotras (generalized from Nitishatakam)
-// Keeps UI/logic intact, adds:
-// - Stotra selector
-// - Loads stotra manifest + verses.json per stotra
-// - Theme persists globally (or via manifest override)
+// - Loads stotras/index.json -> chosen stotra.json -> verses.json per stotra
+// - Theme persists globally (or via themeKey from stotra.json)
+// - Supports practice sets (e.g., "1,2,7-10") and practice modes (single/pairs/full)
+// - NEW: supports v.mode === "full_only" (preface/prose lines with only *_full.mp3)
+
+const qs = (sel) => document.querySelector(sel);
 
 const stotraSelect = document.getElementById("stotraSelect");
-const brandTitleEl = document.getElementById("brandTitle");
-const brandSubEl = document.getElementById("brandSub");
-
 const verseSelect = document.getElementById("verseSelect");
-const prevVerseBtn = document.getElementById("prevVerse");
-const nextVerseBtn = document.getElementById("nextVerse");
+const applyPracticeSetBtn = document.getElementById("applyPracticeSet");
+const practiceSetInput = document.getElementById("practiceSet");
 
-const fullLine = document.getElementById("fullLine");
-const meterBox = document.getElementById("meterBox");
+const titleBox = document.getElementById("stotraTitle");
+const subtitleBox = document.getElementById("stotraSubtitle");
 
-const padaEls = [
-  document.getElementById("pada1"),
-  document.getElementById("pada2"),
-  document.getElementById("pada3"),
-  document.getElementById("pada4"),
-];
+const meterBox = document.getElementById("meter");
+const verseBox = document.getElementById("verseText");
 
-const arthaSa = document.getElementById("arthaSa");
-const meaningEn = document.getElementById("meaningEn");
+const p1Box = document.getElementById("p1Text");
+const p2Box = document.getElementById("p2Text");
+const p3Box = document.getElementById("p3Text");
+const p4Box = document.getElementById("p4Text");
 
-const repSingle = document.getElementById("repSingle");
-const repPairs = document.getElementById("repPairs");
-const repFull = document.getElementById("repFull");
-const speed = document.getElementById("speed");
-const usePractice = document.getElementById("usePractice");
+const saMeaningBox = document.getElementById("saMeaning");
+const enMeaningBox = document.getElementById("enMeaning");
 
-// value badges
-const repSingleVal = document.getElementById("repSingleVal");
-const repPairsVal = document.getElementById("repPairsVal");
-const repFullVal = document.getElementById("repFullVal");
-const speedVal = document.getElementById("speedVal");
-
-// total plays indicator
-const totalPlaysEl = document.getElementById("totalPlays");
-
-const startBtn = document.getElementById("startBtn");
-const stopBtn = document.getElementById("stopBtn");
-
-// Single buttons (normal verses only)
-const singleButtons = document.getElementById("singleButtons");
 const playP1 = document.getElementById("playP1");
 const playP2 = document.getElementById("playP2");
 const playP3 = document.getElementById("playP3");
 const playP4 = document.getElementById("playP4");
-
-// Pair / full buttons
 const playP12 = document.getElementById("playP12");
 const playP34 = document.getElementById("playP34");
 const playFull = document.getElementById("playFull");
 
-const status = document.getElementById("status");
-const player = document.getElementById("player");
+const singleButtons = document.getElementById("singleButtons");
 
-// Practice set UI
-const practiceSetInput = document.getElementById("practiceSet");
-const applySetBtn = document.getElementById("applySet");
-const clearSetBtn = document.getElementById("clearSet");
-const setIndicator = document.getElementById("setIndicator");
+const startPractice = document.getElementById("startPractice");
+const stopPractice = document.getElementById("stopPractice");
 
-// Theme UI
+const repSingle = document.getElementById("repSingle");
+const repPairs = document.getElementById("repPairs");
+const repFull = document.getElementById("repFull");
+
+const totalPlays = document.getElementById("totalPlays");
+const progressText = document.getElementById("progressText");
+const progressBar = document.getElementById("progressBar");
+
 const themeSelect = document.getElementById("themeSelect");
+const speed = document.getElementById("speed");
+const usePractice = document.getElementById("usePractice");
 
-// ----------------- NEW: stotra state -----------------
-let stotraIndex = null;      // stotras/index.json
-let stotra = null;           // current manifest stotra.json
-
+let stotraIndex = null;
+let stotra = null;
 let verses = [];
 let current = null;
+
+let practiceQueue = [];
 let stopRequested = false;
 
-// Practice set state: array of verse indices in verses[]
-let practiceSetIndices = []; // empty => not active
+const audio = new Audio();
+audio.preload = "auto";
 
-// ---------- UI helpers ----------
-function setStatus(msg) { status.textContent = msg; }
-function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
-
-function updateSliderBadges() {
-  repSingleVal.textContent = `${repSingle.value}×`;
-  repPairsVal.textContent = `${repPairs.value}×`;
-  repFullVal.textContent = `${repFull.value}×`;
-  speedVal.textContent = `${Number(speed.value).toFixed(2)}×`;
+function setStatus(msg) {
+  if (progressText) progressText.textContent = msg;
 }
 
-// ---------- verse helpers ----------
-function currentIndex() {
-  if (!current) return -1;
-  return verses.findIndex(v => v.id === current.id);
+function setProgress(done, total) {
+  if (!progressBar) return;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  progressBar.style.width = `${pct}%`;
+  if (totalPlays) totalPlays.textContent = `${done}/${total} (${pct}%)`;
 }
 
-function selectVerseByIndex(idx) {
-  if (!verses.length) return;
-  const i = clamp(idx, 0, verses.length - 1);
-  verseSelect.selectedIndex = i;
-  loadVerse(verses[i]);
+function normalizePath(p) {
+  return (p || "").replace(/^\//, "").replace(/\/{2,}/g, "/");
 }
 
-function getSinglesSequence() {
-  if (!current) return ["p1", "p2", "p3", "p4"];
-  if (current.needsSplitPractice) return ["p12", "p34"];
-  return ["p1", "p2", "p3", "p4"];
+async function fetchJSON(path) {
+  const r = await fetch(path, { cache: "no-store" });
+  if (!r.ok) throw new Error(`Failed to load ${path} (${r.status})`);
+  return await r.json();
+}
+
+function parsePracticeSet(str) {
+  // Accepts: "1,2,7-10" or "vsn_001,vsn_007"
+  const s = (str || "").trim();
+  if (!s) return null;
+
+  const parts = s.split(",").map(x => x.trim()).filter(Boolean);
+  const out = new Set();
+
+  for (const p of parts) {
+    const m = p.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (m) {
+      const a = Number(m[1]), b = Number(m[2]);
+      const lo = Math.min(a, b), hi = Math.max(a, b);
+      for (let i = lo; i <= hi; i++) out.add(String(i));
+    } else {
+      out.add(p);
+    }
+  }
+  return out;
+}
+
+function resolvePracticeSetToVerseIds(set, versesArr) {
+  if (!set) return versesArr.map(v => v.id);
+
+  // If set has numeric entries, map by verse index (1-based) in the displayed list
+  const numericOnly = [...set].every(x => /^\d+$/.test(x));
+  if (numericOnly) {
+    const ids = [];
+    for (const x of set) {
+      const i = Number(x);
+      if (i >= 1 && i <= versesArr.length) ids.push(versesArr[i - 1].id);
+    }
+    return ids;
+  }
+
+  // Else treat as explicit ids (or titles)
+  const byId = new Map(versesArr.map(v => [v.id, v]));
+  const ids = [];
+  for (const x of set) {
+    if (byId.has(x)) ids.push(x);
+  }
+  return ids.length ? ids : versesArr.map(v => v.id);
 }
 
 function audioFor(key) {
@@ -123,10 +141,58 @@ function audioFor(key) {
   return base ? `${base}/${file}` : file;
 }
 
-function computeTotalPlaysForVerse(v) {
-  if (!v) return 0;
+function setPlaybackRate() {
+  const r = Number(speed?.value || 1);
+  audio.playbackRate = r;
+}
 
+function playSrc(src) {
+  return new Promise((resolve, reject) => {
+    if (!src) return resolve();
+    audio.pause();
+    audio.currentTime = 0;
+    audio.src = normalizePath(src);
+    setPlaybackRate();
+
+    const onEnd = () => {
+      cleanup();
+      resolve();
+    };
+    const onErr = () => {
+      cleanup();
+      resolve(); // don't hard-fail practice runs
+    };
+    const cleanup = () => {
+      audio.removeEventListener("ended", onEnd);
+      audio.removeEventListener("error", onErr);
+    };
+
+    audio.addEventListener("ended", onEnd);
+    audio.addEventListener("error", onErr);
+
+    audio.play().catch(() => {
+      cleanup();
+      resolve();
+    });
+  });
+}
+
+function getSinglesSequence() {
+  if (!current) return ["p1", "p2", "p3", "p4"];
+
+  // Full-only lines (preface/prose): treat practice as full playback
+  if (current.mode === "full_only") return ["full"];
+
+  if (current.needsSplitPractice) return ["p12", "p34"];
+  return ["p1", "p2", "p3", "p4"];
+}
+
+function computeTotalPlaysForVerse(v) {
   const nSingle = Number(repSingle.value);
+  if (v.mode === "full_only") {
+    return nSingle;
+  }
+
   const nPairs = Number(repPairs.value);
   const nFull = Number(repFull.value);
 
@@ -142,128 +208,91 @@ function computeTotalPlaysForVerse(v) {
   return singlesPlays + pairsPlays + nFull;
 }
 
-function updateRunSummary() {
-  const perVerse = computeTotalPlaysForVerse(current);
-  if (practiceSetIndices.length > 0) {
-    totalPlaysEl.textContent = String(perVerse * practiceSetIndices.length);
+function loadVerse(v) {
+  current = v;
+
+  meterBox.textContent = v.meter || "—";
+  titleBox.textContent = stotra?.title || "";
+  subtitleBox.textContent = stotra?.subtitle || "";
+
+  verseBox.textContent = v.full || "";
+
+  const t = (usePractice?.checked ? (v.practice || v.text || {}) : (v.text || v.practice || {}));
+
+  p1Box.textContent = t.p1 || "";
+  p2Box.textContent = t.p2 || "";
+  p3Box.textContent = t.p3 || "";
+  p4Box.textContent = t.p4 || "";
+
+  saMeaningBox.textContent = v.gloss?.sa || "";
+  enMeaningBox.textContent = v.gloss?.en || "";
+
+  // Button visibility / enablement
+  if (v.mode === "full_only" || v.needsSplitPractice) {
+    singleButtons.style.display = "none";
   } else {
-    totalPlaysEl.textContent = String(perVerse);
-  }
-}
-
-// ---------- Practice set parsing ----------
-function extractVerseNumber(v) {
-  const m = String(v.id || "").match(/(\d+)/);
-  if (m) return Number(m[1]);
-  return null;
-}
-
-function parsePracticeSet(text, maxN) {
-  const raw = (text || "").trim();
-  if (!raw) return [];
-
-  const parts = raw.split(",").map(s => s.trim()).filter(Boolean);
-  const nums = [];
-
-  for (const part of parts) {
-    const r = part.replace(/\s+/g, "");
-    if (/^\d+$/.test(r)) {
-      nums.push(Number(r));
-      continue;
-    }
-    if (/^\d+-\d+$/.test(r)) {
-      const [a, b] = r.split("-").map(Number);
-      const lo = Math.min(a, b);
-      const hi = Math.max(a, b);
-      for (let k = lo; k <= hi; k++) nums.push(k);
-      continue;
-    }
-    throw new Error(`Invalid token: "${part}"`);
+    singleButtons.style.display = "";
+    playP1.disabled = !v.audio?.p1;
+    playP2.disabled = !v.audio?.p2;
+    playP3.disabled = !v.audio?.p3;
+    playP4.disabled = !v.audio?.p4;
   }
 
-  const seen = new Set();
-  const unique = [];
-  for (const n of nums) {
-    if (!Number.isFinite(n)) continue;
-    if (n < 1 || n > maxN) continue;
-    if (!seen.has(n)) { seen.add(n); unique.push(n); }
+  playP12.disabled = !v.audio?.p12;
+  playP34.disabled = !v.audio?.p34;
+
+  if (v.mode === "full_only") {
+    playP12.disabled = true;
+    playP34.disabled = true;
   }
-  return unique;
-}
 
-function applyPracticeSetFromInput() {
-  try {
-    const maxN = verses.length;
-    const wanted = parsePracticeSet(practiceSetInput.value, maxN);
-    if (wanted.length === 0) {
-      practiceSetIndices = [];
-      setIndicator.textContent = "";
-      updateRunSummary();
-      setStatus("Set cleared. (Single-verse mode)");
-      return;
-    }
+  playFull.disabled = !v.audio?.full;
 
-    practiceSetIndices = wanted.map(n => n - 1).filter(i => i >= 0 && i < verses.length);
-
-    const label = wanted.join(", ");
-    setIndicator.textContent = `Practicing set: ${label} (${practiceSetIndices.length} verses)`;
-    updateRunSummary();
-    setStatus("Set applied.");
-  } catch (e) {
-    setStatus(`Set error: ${e.message}`);
+  // total plays preview for practice
+  const ids = resolvePracticeSetToVerseIds(parsePracticeSet(practiceSetInput?.value), verses);
+  let total = 0;
+  for (const id of ids) {
+    const vv = verses.find(x => x.id === id);
+    if (vv) total += computeTotalPlaysForVerse(vv);
   }
+  setProgress(0, total);
+  setStatus("Ready.");
 }
 
-function clearPracticeSet() {
-  practiceSetInput.value = "";
-  practiceSetIndices = [];
-  setIndicator.textContent = "";
-  updateRunSummary();
-  setStatus("Set cleared. (Single-verse mode)");
-}
+async function buildPracticeQueue() {
+  const set = parsePracticeSet(practiceSetInput?.value);
+  const ids = resolvePracticeSetToVerseIds(set, verses);
 
-// ---------- audio ----------
-async function playSrc(src) {
-  return new Promise((resolve, reject) => {
-    if (!src) return reject(new Error("Missing audio src"));
+  practiceQueue = [];
+  let total = 0;
 
-    player.pause();
-    player.currentTime = 0;
-    player.src = src;
-    player.playbackRate = Number(speed.value);
+  for (const id of ids) {
+    const v = verses.find(x => x.id === id);
+    if (!v) continue;
 
-    const onEnded = () => { cleanup(); resolve(); };
-    const onError = () => { cleanup(); reject(new Error("Audio error / file not found")); };
-
-    function cleanup() {
-      player.removeEventListener("ended", onEnded);
-      player.removeEventListener("error", onError);
-    }
-
-    player.addEventListener("ended", onEnded);
-    player.addEventListener("error", onError);
-
-    setStatus(`Playing: ${src}`);
-    player.play().catch(err => { cleanup(); reject(err); });
-  });
-}
-
-async function playUnit(key) {
-  if (!current) return;
-  stopRequested = false;
-  const src = audioFor(key);
-  if (!src) { setStatus("Audio missing."); return; }
-  try {
-    await playSrc(src);
-    setStatus("Ready.");
-  } catch (e) {
-    setStatus(`Could not play. (${e.message})`);
+    total += computeTotalPlaysForVerse(v);
+    practiceQueue.push(v);
   }
+
+  return { total, idsCount: practiceQueue.length };
 }
 
-// ---------- practice runner ----------
 async function runPracticeForCurrentVerse() {
   if (!current) return;
+
+  // Full-only lines should never stall: just play full, repeated as singles.
+  if (current.mode === "full_only") {
+    stopRequested = false;
+    const src = audioFor("full");
+    if (!src) { setStatus("Audio missing."); return; }
+
+    const nSingle = Number(repSingle.value);
+    for (let i = 0; i < nSingle; i++) {
+      if (stopRequested) { setStatus("Stopped."); return; }
+      await playSrc(src);
+    }
+    return;
+  }
 
   try {
     const seq = getSinglesSequence();
@@ -277,127 +306,81 @@ async function runPracticeForCurrentVerse() {
       }
     }
 
-    for (const k of ["p12", "p34"]) {
-      const src = audioFor(k);
-      if (!src) continue;
+    for (let i = 0; i < Number(repPairs.value); i++) {
+      if (stopRequested) { setStatus("Stopped."); return; }
 
-      for (let i = 0; i < Number(repPairs.value); i++) {
-        if (stopRequested) { setStatus("Stopped."); return; }
-        await playSrc(src);
-      }
+      const src12 = audioFor("p12");
+      if (src12) await playSrc(src12);
+
+      const src34 = audioFor("p34");
+      if (src34) await playSrc(src34);
     }
 
-    const fullSrc = audioFor("full");
     for (let i = 0; i < Number(repFull.value); i++) {
       if (stopRequested) { setStatus("Stopped."); return; }
-      await playSrc(fullSrc);
+      const src = audioFor("full");
+      if (src) await playSrc(src);
     }
   } catch (e) {
-    setStatus(`Could not play audio. Check file paths. (${e.message})`);
-    throw e;
+    // swallow to keep practice robust
   }
 }
 
-async function runPractice() {
-  if (!current) return;
+async function startPracticeRun() {
   stopRequested = false;
+  startPractice.disabled = true;
+  stopPractice.disabled = false;
 
-  if (practiceSetIndices.length > 0) {
-    setStatus("Set practice starting…");
-    for (let s = 0; s < practiceSetIndices.length; s++) {
-      if (stopRequested) { setStatus("Stopped."); return; }
+  const { total } = await buildPracticeQueue();
+  let done = 0;
 
-      const idx = practiceSetIndices[s];
-      const v = verses[idx];
-      if (!v) continue;
+  for (const v of practiceQueue) {
+    if (stopRequested) break;
 
-      verseSelect.selectedIndex = idx;
-      loadVerse(v);
+    // load verse in UI
+    loadVerse(v);
 
-      setStatus(`Set: verse ${idx + 1} (${s + 1}/${practiceSetIndices.length})…`);
-      await runPracticeForCurrentVerse();
-    }
-    setStatus("Done (set).");
-    return;
+    // compute plays for this verse
+    const verseTotal = computeTotalPlaysForVerse(v);
+
+    setStatus(`Practicing ${v.title || v.id} …`);
+    await runPracticeForCurrentVerse();
+
+    done += verseTotal;
+    setProgress(done, total);
   }
 
-  setStatus("Playing…");
-  await runPracticeForCurrentVerse();
-  setStatus("Done.");
+  stopPractice.disabled = true;
+  startPractice.disabled = false;
+
+  if (stopRequested) setStatus("Stopped.");
+  else setStatus("Done.");
 }
 
-function stopAll() {
+function stopPracticeRun() {
   stopRequested = true;
-  player.pause();
-  setStatus("Stopped.");
+  audio.pause();
+  audio.currentTime = 0;
+  stopPractice.disabled = true;
+  startPractice.disabled = false;
+  setStatus("Stopping…");
 }
 
-// ---------- render ----------
-function loadVerse(v) {
-  current = v;
-
-  meterBox.textContent = v.meter || "—";
-  fullLine.textContent = v.full || "";
-
-  const t = (usePractice.checked && v.practice) ? v.practice : v.text;
-  padaEls.forEach((el, i) => {
-    const key = "p" + (i + 1);
-    el.textContent = t?.[key] || "";
+function populateVerseDropdown() {
+  verseSelect.innerHTML = "";
+  verses.forEach((v, i) => {
+    const opt = document.createElement("option");
+    opt.value = v.id;
+    opt.textContent = v.title || v.id;
+    verseSelect.appendChild(opt);
   });
-
-  arthaSa.textContent = v.gloss?.sa || "";
-  meaningEn.textContent = v.gloss?.en || "";
-
-  playP12.disabled = !(v.available?.p12 && v.audio?.p12);
-  playP34.disabled = !(v.available?.p34 && v.audio?.p34);
-
-  if (v.needsSplitPractice) {
-    singleButtons.style.display = "none";
-  } else {
-    singleButtons.style.display = "flex";
-    playP1.disabled = !v.audio?.p1;
-    playP2.disabled = !v.audio?.p2;
-    playP3.disabled = !v.audio?.p3;
-    playP4.disabled = !v.audio?.p4;
-  }
-
-  const idx = currentIndex();
-  prevVerseBtn.disabled = (idx <= 0);
-  nextVerseBtn.disabled = (idx >= verses.length - 1);
-
-  updateSliderBadges();
-  updateRunSummary();
-  setStatus("Ready.");
 }
 
-// ---------- theme ----------
-function setTheme(theme, themeKey) {
-  document.documentElement.dataset.theme = theme;
-  localStorage.setItem(themeKey, theme);
-}
-
-function initTheme(themeKey) {
-  const saved = localStorage.getItem(themeKey) || "dark";
-  themeSelect.value = saved;
-  setTheme(saved, themeKey);
-}
-
-// ---------- NEW: loader ----------
-async function fetchJSON(path) {
-  const resp = await fetch(path, { cache: "no-store" });
-  if (!resp.ok) throw new Error(`Failed to load ${path} (${resp.status})`);
-  return await resp.json();
-}
-
-function getQueryParam(name) {
-  const u = new URL(window.location.href);
-  return u.searchParams.get(name);
-}
-
-function setQueryParam(name, value) {
-  const u = new URL(window.location.href);
-  u.searchParams.set(name, value);
-  window.history.replaceState({}, "", u.toString());
+function selectVerseById(id) {
+  const v = verses.find(x => x.id === id);
+  if (!v) return;
+  verseSelect.value = v.id;
+  loadVerse(v);
 }
 
 async function loadStotra(stotraId) {
@@ -405,155 +388,84 @@ async function loadStotra(stotraId) {
   if (!entry) throw new Error(`Unknown stotra id: ${stotraId}`);
 
   stotra = await fetchJSON(entry.path);
+  verses = await fetchJSON(stotra.versesPath);
 
-  // Update header branding
-  brandTitleEl.textContent = stotra.title || entry.title || "Learn Stotras";
-  brandSubEl.textContent = stotra.subtitle || entry.subtitle || "";
-
+  // theme
   const themeKey = stotra.themeKey || "learnstotras_theme";
-  initTheme(themeKey);
+  const savedTheme = localStorage.getItem(themeKey);
+  if (savedTheme && themeSelect) themeSelect.value = savedTheme;
 
-  // Load verses for this stotra
-  const versesPath = stotra.versesPath;
-  if (!versesPath) throw new Error("stotra.json missing versesPath");
-  verses = await fetchJSON(versesPath);
+  populateVerseDropdown();
+  selectVerseById(verses[0]?.id);
 
-  // stable sort like Nitishatakam
-  verses.forEach(v => { v._num = extractVerseNumber(v) ?? null; });
-  verses.sort((a, b) => {
-    if (a._num != null && b._num != null) return a._num - b._num;
-    return String(a.id).localeCompare(String(b.id));
-  });
+  titleBox.textContent = stotra.title || "";
+  subtitleBox.textContent = stotra.subtitle || "";
 
-  // rebuild verse dropdown
-  verseSelect.innerHTML = "";
-  verses.forEach(v => {
-    const opt = document.createElement("option");
-    opt.value = v.id;
-    opt.textContent = v.title || v.id;
-    verseSelect.appendChild(opt);
-  });
-
-  // reset set mode when switching stotra (keeps things sane)
-  clearPracticeSet();
-
-  if (verses.length > 0) selectVerseByIndex(0);
-  else setStatus("No verses found for this stotra.");
-
-  updateSliderBadges();
-  updateRunSummary();
+  setStatus("Loaded.");
 }
 
-// ---------- init ----------
 async function init() {
-  try {
-    // Load stotra list
-    stotraIndex = await fetchJSON("stotras/index.json");
-    if (!stotraIndex?.stotras?.length) {
-      setStatus("No stotras found in stotras/index.json");
-      return;
-    }
+  stotraIndex = await fetchJSON("stotras/index.json");
 
-    // Populate selector
-    stotraSelect.innerHTML = "";
-    stotraIndex.stotras.forEach(s => {
-      const opt = document.createElement("option");
-      opt.value = s.id;
-      opt.textContent = s.title || s.id;
-      stotraSelect.appendChild(opt);
-    });
+  stotraSelect.innerHTML = "";
+  stotraIndex.stotras.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s.id;
+    opt.textContent = s.title || s.id;
+    stotraSelect.appendChild(opt);
+  });
 
-    // Choose stotra from URL (?stotra=...), else first
-    const fromUrl = getQueryParam("stotra");
-    const initialId = (fromUrl && stotraIndex.stotras.some(x => x.id === fromUrl))
-      ? fromUrl
-      : stotraIndex.stotras[0].id;
+  const initial = stotraIndex.stotras[0]?.id;
+  if (!initial) throw new Error("No stotras in stotras/index.json");
 
-    stotraSelect.value = initialId;
-    await loadStotra(initialId);
+  stotraSelect.value = initial;
+  await loadStotra(initial);
 
-  } catch (e) {
-    setStatus(`Init failed: ${e.message}`);
-    return;
-  }
-
-  // --- events (mostly unchanged) ---
+  // events
   stotraSelect.addEventListener("change", async () => {
-    const id = stotraSelect.value;
-    setQueryParam("stotra", id);
     setStatus("Loading…");
-    await loadStotra(id);
+    await loadStotra(stotraSelect.value);
   });
 
   verseSelect.addEventListener("change", () => {
-    const v = verses[verseSelect.selectedIndex];
-    if (v) loadVerse(v);
+    selectVerseById(verseSelect.value);
   });
 
-  prevVerseBtn.addEventListener("click", () => {
-    const idx = currentIndex();
-    if (idx > 0) selectVerseByIndex(idx - 1);
+  applyPracticeSetBtn?.addEventListener("click", () => {
+    // just refresh totals in UI
+    if (current) loadVerse(current);
   });
 
-  nextVerseBtn.addEventListener("click", () => {
-    const idx = currentIndex();
-    if (idx >= 0 && idx < verses.length - 1) selectVerseByIndex(idx + 1);
-  });
+  startPractice.addEventListener("click", startPracticeRun);
+  stopPractice.addEventListener("click", stopPracticeRun);
 
-  window.addEventListener("keydown", (e) => {
-    const tag = (document.activeElement?.tagName || "").toLowerCase();
-    if (tag === "select" || tag === "input" || tag === "textarea") return;
-    if (e.key === "ArrowLeft") prevVerseBtn.click();
-    if (e.key === "ArrowRight") nextVerseBtn.click();
-  });
-
-  [repSingle, repPairs, repFull, speed].forEach(el => {
-    el.addEventListener("input", () => {
-      updateSliderBadges();
-      updateRunSummary();
-    });
-  });
-
-  usePractice.addEventListener("change", () => { if (current) loadVerse(current); });
-
-  startBtn.addEventListener("click", () => runPractice());
-  stopBtn.addEventListener("click", stopAll);
-
-  applySetBtn.addEventListener("click", applyPracticeSetFromInput);
-  clearSetBtn.addEventListener("click", clearPracticeSet);
-
-  practiceSetInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") applyPracticeSetFromInput();
-  });
-
-  themeSelect.addEventListener("change", () => {
+  themeSelect?.addEventListener("change", () => {
     const themeKey = stotra?.themeKey || "learnstotras_theme";
-    setTheme(themeSelect.value, themeKey);
+    localStorage.setItem(themeKey, themeSelect.value);
+    document.documentElement.setAttribute("data-theme", themeSelect.value);
   });
 
-  playP1.addEventListener("click", () => playUnit("p1"));
-  playP2.addEventListener("click", () => playUnit("p2"));
-  playP3.addEventListener("click", () => playUnit("p3"));
-  playP4.addEventListener("click", () => playUnit("p4"));
-
-  playP12.addEventListener("click", () => playUnit("p12"));
-  playP34.addEventListener("click", () => playUnit("p34"));
-  playFull.addEventListener("click", () => playUnit("full"));
-
-  const canonical = ["p1", "p2", "p3", "p4"];
-  padaEls.forEach((el, i) => {
-    el.addEventListener("click", async () => {
-      if (!current) return;
-      stopRequested = false;
-
-      let key = canonical[i];
-      if (current.needsSplitPractice) key = (i < 2) ? "p12" : "p34";
-      await playUnit(key);
-    });
+  speed?.addEventListener("input", () => setPlaybackRate());
+  usePractice?.addEventListener("change", () => {
+    if (current) loadVerse(current);
   });
 
-  updateSliderBadges();
-  updateRunSummary();
+  // playback buttons
+  playP1?.addEventListener("click", async () => await playSrc(audioFor("p1")));
+  playP2?.addEventListener("click", async () => await playSrc(audioFor("p2")));
+  playP3?.addEventListener("click", async () => await playSrc(audioFor("p3")));
+  playP4?.addEventListener("click", async () => await playSrc(audioFor("p4")));
+  playP12?.addEventListener("click", async () => await playSrc(audioFor("p12")));
+  playP34?.addEventListener("click", async () => await playSrc(audioFor("p34")));
+  playFull?.addEventListener("click", async () => await playSrc(audioFor("full")));
+
+  // init theme attribute
+  const themeKey = stotra?.themeKey || "learnstotras_theme";
+  const savedTheme = localStorage.getItem(themeKey);
+  if (savedTheme) document.documentElement.setAttribute("data-theme", savedTheme);
 }
 
-init();
+init().catch(err => {
+  console.error(err);
+  setStatus(`Init failed: ${err.message}`);
+});
