@@ -81,6 +81,31 @@ let verses = [];
 let current = null;
 let stopRequested = false;
 
+// -------- Theme (FIX) --------
+function applyTheme(themeValue) {
+  // Your CSS: default dark is in :root (no attribute needed)
+  // Other themes are in html[data-theme="..."]
+  if (!themeValue || themeValue === "dark") {
+    document.documentElement.removeAttribute("data-theme");
+  } else {
+    document.documentElement.setAttribute("data-theme", themeValue);
+  }
+  localStorage.setItem("learnstotras_theme", themeValue || "dark");
+}
+
+function initTheme() {
+  if (!themeSelect) return;
+
+  const saved = localStorage.getItem("learnstotras_theme");
+  if (saved) themeSelect.value = saved;
+
+  applyTheme(themeSelect.value);
+
+  themeSelect.addEventListener("change", () => {
+    applyTheme(themeSelect.value);
+  });
+}
+
 // -------- Aksharamukha (lazy) --------
 let akInstance = null;
 let akLoading = null;
@@ -214,6 +239,7 @@ async function loadVerse(v) {
 // -------- Init --------
 async function init() {
   updateBadges();
+  initTheme(); // <-- FIX: apply + listen for theme changes
 
   stotraIndex = await fetchJSON("stotras/index.json");
   stotraIndex.stotras.forEach(s => {
@@ -233,6 +259,10 @@ async function init() {
     o.textContent = v.title || v.id;
     verseSelect.appendChild(o);
   });
+
+  // Script preference
+  const savedScript = localStorage.getItem("learnstotras_script");
+  if (savedScript && scriptSelect) scriptSelect.value = savedScript;
 
   await loadVerse(verses[0]);
 
@@ -260,9 +290,6 @@ async function init() {
     localStorage.setItem("learnstotras_script", scriptSelect.value);
     if (current) loadVerse(current);
   });
-
-  const savedScript = localStorage.getItem("learnstotras_script");
-  if (savedScript && scriptSelect) scriptSelect.value = savedScript;
 
   setStatus("Loaded.");
 }
