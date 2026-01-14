@@ -262,8 +262,9 @@ html, body {
   border-radius: 14px;
   border: 1px solid var(--line);
   background: rgba(255,255,255,0.03);
-  font-size: 14px;
-  color: var(--muted);
+  font-size: 1.05rem;     /* was 14px */
+  line-height: 1.6;
+  color: var(--text);     /* was muted */
 }
 
 .padas {
@@ -378,4 +379,82 @@ html[data-theme="sepia"] {
   .glossRow {
     grid-template-columns: 1fr;
   }
+}
+/* --- Self-record & compare box --- */
+.compareBox{
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
+}
+
+.compareHeader{
+  display:flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.compareTitle{
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+
+.compareHint{
+  opacity: .75;
+  font-size: .85rem;
+}
+
+.compareControls{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.miniLabel{
+  opacity: .8;
+  font-size: .85rem;
+}
+
+.miniSelect{
+  min-width: 110px;
+}
+
+.compareStatus{
+  margin-top: 10px;
+  opacity: .85;
+  font-size: .9rem;
+}
+
+.btn.danger{
+  border-color: rgba(239,68,68,.65);
+  color: rgb(239,68,68);
+}
+
+.btn.recording{
+  background: #b91c1c;
+  border-color: #ef4444;
+  color: #fff;
+  font-weight: 700;
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(239,68,68,.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
+  100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+}
+#arthaSa:empty::before {
+  content: "Sanskrit meaning will appear here";
+  opacity: 0.25;
+  font-style: italic;
+}
+
+#meaningEn:empty::before {
+  content: "English meaning will appear here";
+  opacity: 0.25;
+  font-style: italic;
 }

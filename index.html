@@ -140,6 +140,35 @@
         <button id="playP34" class="btn chip">P3+P4</button>
         <button id="playFull" class="btn chip">Full</button>
       </div>
+		<!-- Self-record & compare (A/B) -->
+<div class="compareBox" id="compareBox">
+  <div class="compareHeader">
+    <div class="compareTitle">Compare your pronunciation</div>
+    <div class="compareHint">Records stay on your device (this browser).</div>
+  </div>
+
+  <div class="compareControls">
+    <label class="miniLabel" for="compareTake">Segment</label>
+    <select id="compareTake" class="select miniSelect">
+      <option value="p1">P1</option>
+      <option value="p2">P2</option>
+      <option value="p3">P3</option>
+      <option value="p4">P4</option>
+      <option value="p12">P1+P2</option>
+      <option value="p34">P3+P4</option>
+      <option value="full" selected>Full</option>
+    </select>
+
+    <button id="recMine" class="btn">Record</button>
+    <button id="stopMine" class="btn" disabled>Stop</button>
+
+    <button id="playMine" class="btn" disabled>Play Mine</button>
+    <button id="compareAB" class="btn" disabled>A→B</button>
+    <button id="clearMine" class="btn danger" disabled>Clear</button>
+  </div>
+
+  <div class="compareStatus" id="compareStatus">Ready.</div>
+</div>
 
       <div class="glossRow">
         <div class="gloss sa" id="arthaSa"></div>

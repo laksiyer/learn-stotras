@@ -5,7 +5,8 @@
 // - practice text toggle
 // - speed control
 // - per-verse practice runs
-// - NEW: v.mode === "full_only" (only *_full.mp3; singles practice plays full)
+// - v.mode === "full_only" (only *_full.mp3; singles practice plays full)
+// - NEW: Self-record & compare (A/B) stored locally via IndexedDB (no server)
 
 const $ = (id) => document.getElementById(id);
 
@@ -66,6 +67,26 @@ const statusBox = $("status");
 
 const player = $("player");
 
+// ---------- Compare UI (optional; app still works if not present) ----------
+const compareBox = $("compareBox");
+const compareTake = $("compareTake");
+const recMine = $("recMine");
+const stopMine = $("stopMine");
+const playMine = $("playMine");
+const compareAB = $("compareAB");
+const clearMine = $("clearMine");
+const compareStatus = $("compareStatus");
+
+const compareEnabled =
+  !!compareBox &&
+  !!compareTake &&
+  !!recMine &&
+  !!stopMine &&
+  !!playMine &&
+  !!compareAB &&
+  !!clearMine &&
+  !!compareStatus;
+
 // -------- State --------
 let stotraIndex = null;
 let stotra = null;
@@ -74,9 +95,22 @@ let current = null;
 
 let stopRequested = false;
 
+// Compare recording state
+let mediaRecorder = null;
+let recordingChunks = [];
+let recordingStream = null;
+let mineObjectURL = null;
+
+// A separate audio element for "Mine" playback so we don't fight the main player
+const minePlayer = new Audio();
+minePlayer.preload = "auto";
+
 // -------- Helpers --------
 function setStatus(msg) {
   if (statusBox) statusBox.textContent = msg;
+}
+function setCompareStatus(msg) {
+  if (compareEnabled) compareStatus.textContent = msg;
 }
 
 async function fetchJSON(path) {
@@ -171,39 +205,315 @@ function audioFor(key) {
 }
 
 function setPlaybackRate() {
-  player.playbackRate = Number(speed.value || 1.0);
+  const r = Number(speed.value || 1.0);
+  player.playbackRate = r;
+  minePlayer.playbackRate = r;
 }
 
-function playSrc(src) {
+function playWith(audioEl, src) {
   return new Promise((resolve) => {
     if (!src) return resolve();
 
-    player.pause();
-    player.currentTime = 0;
-    player.src = normalizePath(src);
+    audioEl.pause();
+    audioEl.currentTime = 0;
+    audioEl.src = src;
     setPlaybackRate();
 
     const cleanup = () => {
-      player.removeEventListener("ended", onEnd);
-      player.removeEventListener("error", onErr);
+      audioEl.removeEventListener("ended", onEnd);
+      audioEl.removeEventListener("error", onErr);
     };
 
     const onEnd = () => { cleanup(); resolve(); };
     const onErr = () => { cleanup(); resolve(); };
 
-    player.addEventListener("ended", onEnd);
-    player.addEventListener("error", onErr);
+    audioEl.addEventListener("ended", onEnd);
+    audioEl.addEventListener("error", onErr);
 
-    player.play().catch(() => { cleanup(); resolve(); });
+    audioEl.play().catch(() => { cleanup(); resolve(); });
   });
 }
 
+function playSrc(src) {
+  if (!src) return Promise.resolve();
+  return playWith(player, normalizePath(src));
+}
+
+function playMineSrc(src) {
+  if (!src) return Promise.resolve();
+  return playWith(minePlayer, src);
+}
+
+// ---------------- IndexedDB for "Mine" recordings ----------------
+const DB_NAME = "learn-stotras";
+const DB_VER = 1;
+const STORE = "userRecordings";
+
+function dbKey(stotraId, verseId, take) {
+  return `${stotraId}::${verseId}::${take}`;
+}
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        db.createObjectStore(STORE, { keyPath: "key" });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbGet(key) {
+  const db = await openDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction(STORE, "readonly");
+    const st = tx.objectStore(STORE);
+    const req = st.get(key);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
+  });
+}
+
+async function dbPut(obj) {
+  const db = await openDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).put(obj);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => resolve(false);
+  });
+}
+
+async function dbDel(key) {
+  const db = await openDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction(STORE, "readwrite");
+    tx.objectStore(STORE).delete(key);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => resolve(false);
+  });
+}
+
+function revokeMineURL() {
+  if (mineObjectURL) {
+    URL.revokeObjectURL(mineObjectURL);
+    mineObjectURL = null;
+  }
+}
+
+async function getMineBlobForCurrent(take) {
+  if (!compareEnabled || !current) return null;
+  const stotraId = stotraSelect.value;
+  const key = dbKey(stotraId, current.id, take);
+  const rec = await dbGet(key);
+  return rec?.blob || null;
+}
+
+async function refreshCompareUI() {
+  if (!compareEnabled || !current) return;
+
+  const take = compareTake.value;
+  const ref = audioFor(take);
+  const blob = await getMineBlobForCurrent(take);
+
+  playMine.disabled = !blob;
+  clearMine.disabled = !blob;
+
+  // A→B requires both reference and mine
+  compareAB.disabled = !(blob && ref);
+
+  // If recording supported?
+  const hasRecorder = !!(navigator.mediaDevices?.getUserMedia && window.MediaRecorder);
+  recMine.disabled = !hasRecorder;
+  if (!hasRecorder) {
+    setCompareStatus("Recording not supported in this browser.");
+    return;
+  }
+
+  if (blob) {
+    setCompareStatus(`Saved recording exists for ${current.id} (${take.toUpperCase()}).`);
+  } else {
+    setCompareStatus(`No saved recording for ${current.id} (${take.toUpperCase()}).`);
+  }
+}
+
+// ---------------- Recording controls ----------------
+function pickBestMimeType() {
+  // Try common types. Browser decides based on support.
+  const candidates = [
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/ogg;codecs=opus",
+    "audio/ogg",
+  ];
+  for (const t of candidates) {
+    if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) return t;
+  }
+  return ""; // let browser choose
+}
+
+async function startMineRecording() {
+  if (!compareEnabled || !current) return;
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+    setCompareStatus("Recording not supported in this browser.");
+    return;
+  }
+
+  // Stop any current playback to reduce feedback
+  try { player.pause(); } catch {}
+  try { minePlayer.pause(); } catch {}
+
+  // If already recording, ignore
+  if (mediaRecorder && mediaRecorder.state === "recording") return;
+
+  const take = compareTake.value;
+  const stotraId = stotraSelect.value;
+
+  recordingChunks = [];
+
+  try {
+    recordingStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      }
+    });
+
+    const mimeType = pickBestMimeType();
+    mediaRecorder = new MediaRecorder(recordingStream, mimeType ? { mimeType } : undefined);
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) recordingChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = async () => {
+      // Cleanup stream tracks
+      try {
+        recordingStream?.getTracks()?.forEach(t => t.stop());
+      } catch {}
+      recordingStream = null;
+
+      const blob = new Blob(recordingChunks, { type: mediaRecorder.mimeType || "audio/webm" });
+      const key = dbKey(stotraId, current.id, take);
+      await dbPut({
+        key,
+        stotraId,
+        verseId: current.id,
+        take,
+        updated: Date.now(),
+        blob
+      });
+
+      recMine.classList.remove("recording");
+      recMine.disabled = false;
+      stopMine.disabled = true;
+
+      setCompareStatus(`Saved: ${current.id} (${take.toUpperCase()}).`);
+      await refreshCompareUI();
+    };
+
+    mediaRecorder.start();
+
+    // UI updates
+    recMine.disabled = true;
+    stopMine.disabled = false;
+    recMine.classList.add("recording");
+    setCompareStatus(`Recording… ${current.id} (${take.toUpperCase()})`);
+
+  } catch (err) {
+    // Cleanup if permission denied
+    try { recordingStream?.getTracks()?.forEach(t => t.stop()); } catch {}
+    recordingStream = null;
+    mediaRecorder = null;
+
+    recMine.classList.remove("recording");
+    recMine.disabled = false;
+    stopMine.disabled = true;
+
+    setCompareStatus(`Mic error: ${err?.message || err}`);
+  }
+}
+
+function stopMineRecording() {
+  if (!compareEnabled) return;
+
+  try {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+      mediaRecorder.stop();
+    }
+  } catch {}
+}
+
+async function playMineRecording() {
+  if (!compareEnabled || !current) return;
+
+  const take = compareTake.value;
+  const blob = await getMineBlobForCurrent(take);
+  if (!blob) {
+    setCompareStatus("No saved recording yet.");
+    return;
+  }
+
+  revokeMineURL();
+  mineObjectURL = URL.createObjectURL(blob);
+
+  setCompareStatus(`Playing mine: ${current.id} (${take.toUpperCase()})`);
+  await playMineSrc(mineObjectURL);
+  setCompareStatus("Ready.");
+}
+
+async function compareABPlay() {
+  if (!compareEnabled || !current) return;
+
+  const take = compareTake.value;
+  const refSrc = audioFor(take);
+  const blob = await getMineBlobForCurrent(take);
+
+  if (!refSrc) {
+    setCompareStatus("Reference audio missing for this segment.");
+    return;
+  }
+  if (!blob) {
+    setCompareStatus("No saved recording yet.");
+    return;
+  }
+
+  // Create mine URL
+  revokeMineURL();
+  mineObjectURL = URL.createObjectURL(blob);
+
+  // A→B: play Reference (A), then Mine (B)
+  setCompareStatus(`A→B compare: ${take.toUpperCase()} (Reference → Mine)`);
+  await playSrc(refSrc);
+  await playMineSrc(mineObjectURL);
+  setCompareStatus("Ready.");
+}
+
+async function clearMineRecording() {
+  if (!compareEnabled || !current) return;
+
+  const take = compareTake.value;
+  const stotraId = stotraSelect.value;
+  const key = dbKey(stotraId, current.id, take);
+
+  await dbDel(key);
+  revokeMineURL();
+  setCompareStatus(`Cleared: ${current.id} (${take.toUpperCase()})`);
+  await refreshCompareUI();
+}
+
+// ---------------- Existing practice logic ----------------
 function computeTotalPlaysForVerse(v) {
   const nSingle = Number(repSingle.value);
   const nPairs  = Number(repPairs.value);
   const nFull   = Number(repFull.value);
 
-  // NEW: full-only rows only use "singles" count (as full repeats)
+  // full-only rows only use "singles" count (as full repeats)
   if ((v.mode || "normal") === "full_only") {
     return nSingle;
   }
@@ -306,12 +616,15 @@ function loadVerse(v) {
 
   updateTotalPlaysForRun();
   setStatus("Ready.");
+
+  // Refresh compare state for new verse
+  refreshCompareUI();
 }
 
 function getSinglesKeysForVerse(v) {
   const mode = (v.mode || "normal");
 
-  // NEW: full-only: singles practice means repeating full
+  // full-only: singles practice means repeating full
   if (mode === "full_only") return ["full"];
 
   // needs split practice: treat p12/p34 as "singles"
@@ -321,7 +634,6 @@ function getSinglesKeysForVerse(v) {
 }
 
 async function runPracticeForVerse(v) {
-  // NEW: robust: always pick what exists; never stall
   const singlesKeys = getSinglesKeysForVerse(v);
 
   // Singles loop
@@ -346,7 +658,7 @@ async function runPracticeForVerse(v) {
     }
   }
 
-  // Full loop (also runs for full_only only if repFull > 0; optional)
+  // Full loop
   for (let i = 0; i < Number(repFull.value); i++) {
     if (stopRequested) return;
     const src = audioFor("full");
@@ -402,7 +714,7 @@ async function loadStotra(stotraId) {
   stotra = await fetchJSON(entry.path);
   verses = await fetchJSON(stotra.versesPath);
 
-  // theme (stotra-specific key if provided)
+  // theme
   loadSavedTheme();
 
   // header
@@ -414,6 +726,7 @@ async function loadStotra(stotraId) {
   updateTotalPlaysForRun();
 
   setStatus("Loaded.");
+  refreshCompareUI();
 }
 
 async function init() {
@@ -490,6 +803,21 @@ async function init() {
   playP12.addEventListener("click", async () => await playSrc(audioFor("p12")));
   playP34.addEventListener("click", async () => await playSrc(audioFor("p34")));
   playFull.addEventListener("click", async () => await playSrc(audioFor("full")));
+
+  // Compare events (only if UI exists)
+  if (compareEnabled) {
+    compareTake.addEventListener("change", refreshCompareUI);
+
+    recMine.addEventListener("click", startMineRecording);
+    stopMine.addEventListener("click", stopMineRecording);
+    playMine.addEventListener("click", playMineRecording);
+    compareAB.addEventListener("click", compareABPlay);
+    clearMine.addEventListener("click", clearMineRecording);
+
+    // initial state
+    stopMine.disabled = true;
+    refreshCompareUI();
+  }
 
   setPlaybackRate();
 }
