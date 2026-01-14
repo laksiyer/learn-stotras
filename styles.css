@@ -43,7 +43,7 @@ html, body {
 .topControls {
   display: flex;
   gap: 14px;
-  align-items: end;
+  align-items: center;
 }
 
 .controlGroup label {
