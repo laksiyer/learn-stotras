@@ -13,3 +13,6 @@ rawfiles/*.aup3*
 *.aup3
 *.aup3-wal
 *.aup3-shm
+
+# Local backups
+backup/
