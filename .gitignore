@@ -16,3 +16,6 @@ rawfiles/*.aup3*
 
 # Local backups
 backup/
+
+# Local helper scripts
+commands.sh
