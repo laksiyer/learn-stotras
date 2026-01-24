@@ -7,3 +7,9 @@ rawfiles/*.aup3*
 *.aup3
 *.aup3-wal
 *.aup3-shm
+
+# Audacity (never commit)
+rawfiles/*.aup3*
+*.aup3
+*.aup3-wal
+*.aup3-shm
