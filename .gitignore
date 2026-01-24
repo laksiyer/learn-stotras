@@ -1,3 +1,9 @@
 version https://git-lfs.github.com/spec/v1
 oid sha256:7d06664cc5200f52984f3b418800828f0ec2714eccb4b60e1990f3d149307229
 size 184
+
+# Audacity (never commit)
+rawfiles/*.aup3*
+*.aup3
+*.aup3-wal
+*.aup3-shm
