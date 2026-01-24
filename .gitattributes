@@ -15,3 +15,8 @@
 *.json text
 *.tsv text
 *.mp3 text !filter !merge !diff
+
+# Treat audio as binary (no line-ending conversion)
+*.mp3 -text
+*.wav -text
+*.m4a -text
