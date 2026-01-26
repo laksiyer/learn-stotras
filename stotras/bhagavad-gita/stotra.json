@@ -1,0 +1,7 @@
+{
+  "id": "bhagavad-gita",
+  "title": "भगवद्गीता",
+  "subtitle": "अध्याय → श्लोकाभ्यासः",
+  "audioBase": "stotras/bhagavad-gita/audio",
+  "versesPath": "stotras/bhagavad-gita/data/verses.json"
+}
