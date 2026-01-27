@@ -91,6 +91,9 @@ let stotra = null;      // current stotra.json
 let verses = [];        // current verses.json
 let current = null;     // current verse object
 let stopRequested = false;
+let chapters = [];         // e.g., [{ id: "1", title: "1. अर्जुनविषादयोगः" }, ...]
+let chapterVerses = [];    // filtered verses for currently selected chapter
+let currentChapterId = ""; // "1", "2", ...
 
 // ---------------- Utilities ----------------
 function setStatus(msg) {
@@ -144,6 +147,18 @@ function initTheme() {
   if (saved) themeSelect.value = saved;
   applyTheme(themeSelect.value);
   themeSelect.addEventListener("change", () => applyTheme(themeSelect.value));
+}
+function getChapters() {
+  const set = new Set(verses.map(v => v.chapter).filter(x => x != null));
+  return Array.from(set).sort((a, b) => a - b);
+}
+
+function setChapter(ch) {
+  currentChapter = ch;
+  chapterVerses = verses.filter(v => v.chapter === ch);
+
+  populateVerseDropdown();     // will be updated to use chapterVerses
+  selectVerseByIndex(0);
 }
 
 // ---------------- Script switching (Aksharamukha lazy) ----------------
@@ -343,13 +358,17 @@ async function renderVerseText(v) {
 
 function populateVerseDropdown() {
   verseSelect.innerHTML = "";
-  verses.forEach(v => {
+
+  const list = (chapterVerses && chapterVerses.length) ? chapterVerses : verses;
+
+  list.forEach(v => {
     const opt = document.createElement("option");
     opt.value = v.id;
     opt.textContent = v.title || v.id;
     verseSelect.appendChild(opt);
   });
 }
+
 
 function selectVerseByIndex(idx) {
   if (!verses.length) return;
@@ -738,23 +757,97 @@ async function clearMineRecording() {
   await refreshCompareUI();
 }
 
+function getChapterIdFromVerseId(verseId) {
+  // expects ids like "bg_01_023"
+  const m = String(verseId || "").match(/^bg_(\d{2})_/i);
+  if (!m) return "";
+  return String(parseInt(m[1], 10)); // "01" -> "1"
+}
+
 // ---------------- Load stotra ----------------
 async function loadStotra(stotraId) {
   const entry = stotraIndex.stotras.find(s => s.id === stotraId);
   if (!entry) throw new Error(`Unknown stotra id: ${stotraId}`);
 
-  stotra = await fetchJSON(entry.path);
-  verses = await fetchJSON(stotra.versesPath);
+stotra = await fetchJSON(entry.path);
 
-  brandTitle.textContent = stotra.title || "Learn Stotras";
-  brandSub.textContent = stotra.subtitle || "पद → द्विपद → श्लोक अभ्यासः";
+let rawVerses = await fetchJSON(stotra.versesPath);
 
-  populateVerseDropdown();
-  selectVerseByIndex(0);
-  updateTotalPlaysForRun();
+// normalize: allow either [ ... ] OR { verses: [ ... ] }
+verses = Array.isArray(rawVerses) ? rawVerses : (rawVerses?.verses || []);
 
-  setStatus("Loaded.");
-  await refreshCompareUI();
+// add chapter/verseNumber if missing
+verses = verses.map(v => {
+  const out = { ...v };
+
+  // 1) try from id like bg_01_023
+  if (out.chapter == null && typeof out.id === "string") {
+    const m = out.id.match(/^[a-z]+_(\d+)_([\d]+)/i);
+    if (m) out.chapter = parseInt(m[1], 10);
+    if (m) out.verseNumber = parseInt(m[2], 10);
+  }
+
+  // 2) try from title like "1.23"
+  if (out.chapter == null && typeof out.title === "string") {
+    const m2 = out.title.match(/^\s*(\d+)\.(\d+)\s*$/);
+    if (m2) {
+      out.chapter = parseInt(m2[1], 10);
+      out.verseNumber = parseInt(m2[2], 10);
+    }
+  }
+
+  // default chapter if still unknown (keeps it safe)
+  if (out.chapter == null) out.chapter = 1;
+
+  return out;
+});
+// Build chapters list from normalized verses (now each verse has .chapter)
+const chapterSet = new Set(verses.map(v => String(v.chapter)));
+chapters = Array.from(chapterSet)
+  .sort((a, b) => Number(a) - Number(b))
+  .map(ch => ({
+    id: ch,
+    title: (stotra.chapter_titles && stotra.chapter_titles[ch])
+      ? `${ch}. ${stotra.chapter_titles[ch]}`
+      : `Chapter ${ch}`
+  }));
+
+// default chapter (first one) + populate chapter dropdown
+currentChapterId = chapters.length ? chapters[0].id : "";
+chapterVerses = currentChapterId
+  ? verses.filter(v => String(v.chapter) === String(currentChapterId))
+  : [];
+
+// update header
+brandTitle.textContent = stotra.title || "Learn Stotras";
+brandSub.textContent = stotra.subtitle || "पद → द्विपद → श्लोक अभ्यासः";
+
+// populate chapter dropdown (NEW)
+populateChapterDropdown();
+
+// populate verse dropdown (this will use chapterVerses once you updated populateVerseDropdown)
+populateVerseDropdown();
+selectVerseByIndex(0);
+updateTotalPlaysForRun();
+
+setStatus("Loaded.");
+await refreshCompareUI();
+}
+function populateChapterDropdown() {
+  const chapterSelect = document.getElementById("chapterSelect");
+  if (!chapterSelect) return;
+
+  chapterSelect.innerHTML = "";
+  chapters.forEach(ch => {
+    const opt = document.createElement("option");
+    opt.value = ch.id;
+    opt.textContent = ch.title;
+    chapterSelect.appendChild(opt);
+  });
+
+  if (currentChapterId) {
+    chapterSelect.value = currentChapterId;
+  }
 }
 
 // ---------------- Init ----------------

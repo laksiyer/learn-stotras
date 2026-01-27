@@ -59,16 +59,25 @@
   <main class="layout">
     <!-- LEFT PANEL -->
     <section class="panel left">
-      <div class="verseNav">
-        <button id="prevVerse" class="navBtn" title="Previous verse">‹</button>
+<div class="verseNav">
+  <!-- Chapter picker -->
+  <div class="versePicker" style="margin-bottom: 8px;">
+    <div class="labelSmall">Chapter</div>
+    <select id="chapterSelect" class="select"></select>
+  </div>
 
-        <div class="versePicker">
-          <div class="labelSmall">Verse</div>
-          <select id="verseSelect" class="select"></select>
-        </div>
+  <!-- Verse navigation -->
+  <div class="verseNavRow">
+    <button id="prevVerse" class="navBtn" title="Previous verse">‹</button>
 
-        <button id="nextVerse" class="navBtn" title="Next verse">›</button>
-      </div>
+    <div class="versePicker">
+      <div class="labelSmall">Verse</div>
+      <select id="verseSelect" class="select"></select>
+    </div>
+
+    <button id="nextVerse" class="navBtn" title="Next verse">›</button>
+  </div>
+</div>
 
       <div class="meter" id="meterBox">—</div>
 
