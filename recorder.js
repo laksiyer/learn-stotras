@@ -37,7 +37,13 @@ const els = {
   exportZip: document.getElementById("exportZip"),
   clearVerse: document.getElementById("clearVerse"),
   status: document.getElementById("status"),
+  
+  chapterSelect: document.getElementById("chapterSelect"),
+
 };
+let chapters = [];
+let chapterVerses = [];
+let currentChapterId = "";
 
 let stotraIndex = null;
 let stotra = null;
@@ -73,6 +79,17 @@ function setQueryParam(name, value) {
 }
 function getQueryParam(name) {
   return new URL(window.location.href).searchParams.get(name);
+}
+function populateVerseDropdown() {
+  const list = (chapterVerses && chapterVerses.length) ? chapterVerses : verses;
+
+  els.verseSelect.innerHTML = "";
+  list.forEach(v => {
+    const opt = document.createElement("option");
+    opt.value = v.id;
+    opt.textContent = v.title || v.id;
+    els.verseSelect.appendChild(opt);
+  });
 }
 
 function ensureVerseStore(vid) {
@@ -354,29 +371,97 @@ function renderVerse(v) {
 }
 
 function selectVerseByIndex(i) {
-  if (!verses.length) return;
-  const idx = Math.max(0, Math.min(i, verses.length - 1));
+  const list = (chapterVerses && chapterVerses.length) ? chapterVerses : verses;
+  if (!list.length) return;
+
+  const idx = Math.max(0, Math.min(i, list.length - 1));
   els.verseSelect.selectedIndex = idx;
-  renderVerse(verses[idx]);
+  renderVerse(list[idx]);
 }
 
+
+// ---------------- Load stotra ----------------
 async function loadStotra(stotraId) {
   const entry = stotraIndex.stotras.find(s => s.id === stotraId);
   if (!entry) throw new Error(`Unknown stotra id: ${stotraId}`);
 
   stotra = await fetchJSON(entry.path);
-  verses = await fetchJSON(stotra.versesPath);
 
-  // populate verse list
-  els.verseSelect.innerHTML = "";
-  verses.forEach((v, i) => {
-    const opt = document.createElement("option");
-    opt.value = v.id;
-    opt.textContent = v.title || v.id;
-    els.verseSelect.appendChild(opt);
+  // (A) fetch + normalize
+  const rawVerses = await fetchJSON(stotra.versesPath);
+  verses = Array.isArray(rawVerses) ? rawVerses : (rawVerses?.verses || []);
+
+  // (B) add chapter + verseNumber if missing
+  verses = verses.map(v => {
+    const out = { ...v };
+
+    // id like bg_01_023
+    if (out.chapter == null && typeof out.id === "string") {
+      const m = out.id.match(/^[a-z]+_(\d+)_([\d]+)/i);
+      if (m) {
+        out.chapter = parseInt(m[1], 10);
+        out.verseNumber = parseInt(m[2], 10);
+      }
+    }
+
+    // title like "1.23"
+    if ((out.chapter == null || out.verseNumber == null) && typeof out.title === "string") {
+      const m2 = out.title.match(/^\s*(\d+)\.(\d+)\s*$/);
+      if (m2) {
+        out.chapter = parseInt(m2[1], 10);
+        out.verseNumber = parseInt(m2[2], 10);
+      }
+    }
+
+    // safe defaults
+    if (out.chapter == null) out.chapter = 1;
+    if (out.verseNumber == null) out.verseNumber = 1;
+
+    return out;
   });
 
+  // (C) sort (optional but nice)
+  verses.sort((a, b) => (a.chapter - b.chapter) || (a.verseNumber - b.verseNumber));
+
+  // =========================================================
+  // (D) POINT (4) GOES RIGHT HERE:
+  // Build chapters + populate chapter dropdown
+  // =========================================================
+  const chapterSet = new Set(verses.map(v => String(v.chapter)));
+  chapters = Array.from(chapterSet)
+    .sort((a, b) => Number(a) - Number(b))
+    .map(ch => ({
+      id: ch,
+      title: (stotra.chapter_titles && stotra.chapter_titles[ch])
+        ? `${ch}. ${stotra.chapter_titles[ch]}`
+        : `Chapter ${ch}`
+    }));
+
+  // Populate chapter dropdown
+  if (els.chapterSelect) {
+    els.chapterSelect.innerHTML = "";
+    chapters.forEach(ch => {
+      const opt = document.createElement("option");
+      opt.value = ch.id;
+      opt.textContent = ch.title;
+      els.chapterSelect.appendChild(opt);
+    });
+  }
+
+  // Default chapter selection
+  currentChapterId = chapters.length ? chapters[0].id : "";
+  if (els.chapterSelect && currentChapterId) els.chapterSelect.value = currentChapterId;
+
+  // Filter verses for chapter
+  chapterVerses = currentChapterId
+    ? verses.filter(v => String(v.chapter) === String(currentChapterId))
+    : verses;
+  // =========================================================
+
+  // (E) populate VERSE dropdown from chapterVerses (not verses)
+populateVerseDropdown();   // whatever the real name is
   selectVerseByIndex(0);
+
   setStatus(`Loaded ${stotra.title || entry.title}.`);
 }
 
@@ -480,6 +565,20 @@ async function init() {
       }
     }
   });
+if (els.chapterSelect) {
+  els.chapterSelect.addEventListener("change", () => {
+    currentChapterId = els.chapterSelect.value;
+
+    chapterVerses = currentChapterId
+      ? verses.filter(v => String(v.chapter) === String(currentChapterId))
+      : verses;
+
+    populateVerseDropdown();
+    selectVerseByIndex(0);
+    setStatus(`Chapter ${currentChapterId} loaded.`);
+  });
+}
+
 }
 
 init().catch(err => {
