@@ -84,6 +84,8 @@ const compareEnabled =
 // Separate audio element for user's take
 const minePlayer = new Audio();
 minePlayer.preload = "auto";
+const params = new URLSearchParams(window.location.search);
+const forcedStotra = params.get("stotra");
 
 // ---------------- State ----------------
 let stotraIndex = null; // stotras/index.json
@@ -347,10 +349,22 @@ async function renderVerseText(v) {
   const prText = v.practice || baseText;
   const t = usePractice?.checked ? prText : baseText;
 
+  // set all 4 lines first
   pada1.textContent = await translit(t.p1 || "", script);
   pada2.textContent = await translit(t.p2 || "", script);
   pada3.textContent = await translit(t.p3 || "", script);
   pada4.textContent = await translit(t.p4 || "", script);
+
+  // then hide empty ones
+  function toggleEmpty(el) {
+    const empty = !el.textContent || !el.textContent.trim();
+    el.classList.toggle("is-empty", empty);
+  }
+
+  toggleEmpty(pada1);
+  toggleEmpty(pada2);
+  toggleEmpty(pada3);
+  toggleEmpty(pada4);
 
   arthaSa.textContent = v.gloss?.sa || "";
   meaningEn.textContent = v.gloss?.en || "";
@@ -385,7 +399,14 @@ function selectVerseById(id) {
 // ---------------- Verse load ----------------
 async function loadVerse(v) {
   current = v;
-  current.mode = current.mode || "normal";
+ const a = current.audio || {};
+const hasSingles = !!(a.p1 || a.p2 || a.p3 || a.p4);
+const hasPairs   = !!(a.p12 || a.p34);
+
+// Add a class to body when this verse is pair-only
+document.body.classList.toggle("pair-only", !hasSingles && hasPairs);
+
+ current.mode = current.mode || "normal";
 
   brandTitle.textContent = stotra?.title || "Learn Stotras";
   brandSub.textContent = stotra?.subtitle || "पद → द्विपद → श्लोक अभ्यासः";
@@ -866,11 +887,11 @@ async function init() {
     stotraSelect.appendChild(opt);
   });
 
-  const initial = stotraIndex.stotras[0]?.id;
-  if (!initial) throw new Error("No stotras in stotras/index.json");
+const initial = forcedStotra || stotraIndex.stotras[0]?.id;
+if (!initial) throw new Error("No stotras in stotras/index.json");
 
-  stotraSelect.value = initial;
-  await loadStotra(initial);
+stotraSelect.value = initial;
+await loadStotra(initial);
 
   stotraSelect.addEventListener("change", async () => {
     setStatus("Loading…");

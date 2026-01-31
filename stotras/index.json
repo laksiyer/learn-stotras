@@ -3,14 +3,20 @@
     {
       "id": "vishnu-sahasranama",
       "title": "विष्णुसहस्रनामस्तोत्रम्",
-      "subtitle": "पदशः श्लोकानाम् अभ्यासः",
+      "subtitle": "पादशः श्लोकानाम् अभ्यासः",
       "path": "stotras/vishnu-sahasranama/stotra.json"
     },
     {
       "id": "bhagavad-gita",
       "title": "भगवद्गीता",
-      "subtitle": "अध्याय → श्लोक अभ्यासः",
+      "subtitle": "प्रत्यध्यायं श्लोकानम् अभ्यासः",
       "path": "stotras/bhagavad-gita/stotra.json"
-    }
+    },
+  {
+  "id": "amarakosha",
+  "title": "अमरकोषः ",
+  "subtitle": "प्रत्यध्यायं श्लोकानम् अभ्यासः",
+  "path": "stotras/amarakosha/stotra.json"
+   }   
   ]
 }

@@ -458,3 +458,11 @@ html[data-theme="sepia"] {
   opacity: 0.25;
   font-style: italic;
 }
+
+.is-empty {
+  display: none !important;
+}
+body.pair-only #padaRepeatBlock {
+  display: none !important;
+}
+
