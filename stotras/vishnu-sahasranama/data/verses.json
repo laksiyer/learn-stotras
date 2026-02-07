@@ -943,8 +943,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_026_p1.mp3",
@@ -959,7 +959,7 @@
       "sa": "",
       "en": ""
     },
-    "mode": "full_only"
+    "mode": "normal"
   },
   {
     "id": "vsn_027",
