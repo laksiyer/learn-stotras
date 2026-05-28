@@ -274,18 +274,37 @@ function parsePracticeSet(str) {
   const out = new Set();
 
   for (const p of parts) {
-    const m = p.match(/^(\d+)\s*-\s*(\d+)$/);
+    // 10-20
+    let m = p.match(/^(\d+)\s*-\s*(\d+)$/);
     if (m) {
       const a = Number(m[1]), b = Number(m[2]);
       const lo = Math.min(a, b), hi = Math.max(a, b);
       for (let i = lo; i <= hi; i++) out.add(String(i));
-    } else {
-      out.add(p);
+      continue;
     }
+
+    // 10- means 10 through end
+    m = p.match(/^(\d+)\s*-\s*$/);
+    if (m) {
+      const start = Number(m[1]);
+      for (let i = start; i <= verses.length; i++) out.add(String(i));
+      continue;
+    }
+
+    // -10 means 1 through 10
+    m = p.match(/^-\s*(\d+)$/);
+    if (m) {
+      const end = Number(m[1]);
+      for (let i = 1; i <= end; i++) out.add(String(i));
+      continue;
+    }
+
+    // single number or verse id
+    out.add(p);
   }
+
   return out;
 }
-
 function resolvePracticeSetToVerseIds(set, versesArr) {
   if (!set) return versesArr.map(v => v.id);
 
