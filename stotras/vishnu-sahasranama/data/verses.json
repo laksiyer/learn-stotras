@@ -5346,8 +5346,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_145_p1.mp3",
@@ -5383,8 +5383,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_146_p1.mp3",
@@ -5420,8 +5420,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_147_p1.mp3",
@@ -5457,8 +5457,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_148_p1.mp3",
@@ -5494,8 +5494,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_149_p1.mp3",
@@ -5531,8 +5531,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_150_p1.mp3",
@@ -5568,8 +5568,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_151_p1.mp3",
@@ -5605,8 +5605,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_152_p1.mp3",
@@ -5642,8 +5642,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_153_p1.mp3",
@@ -5679,8 +5679,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_154_p1.mp3",
@@ -5716,8 +5716,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_155_p1.mp3",
@@ -5753,8 +5753,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_156_p1.mp3",
@@ -5790,8 +5790,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_157_p1.mp3",
@@ -5827,8 +5827,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_158_p1.mp3",
@@ -5864,8 +5864,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_159_p1.mp3",
@@ -5901,8 +5901,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_160_p1.mp3",
@@ -5938,8 +5938,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_161_p1.mp3",
@@ -5975,8 +5975,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_162_p1.mp3",
@@ -6012,8 +6012,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_163_p1.mp3",
@@ -6049,8 +6049,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_164_p1.mp3",
@@ -6086,8 +6086,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_165_p1.mp3",
@@ -6123,8 +6123,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_166_p1.mp3",
@@ -6160,8 +6160,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_167_p1.mp3",
@@ -6197,8 +6197,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_168_p1.mp3",
@@ -6234,8 +6234,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_169_p1.mp3",
@@ -6271,8 +6271,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_170_p1.mp3",
@@ -6308,8 +6308,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_171_p1.mp3",
@@ -6345,8 +6345,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_172_p1.mp3",
@@ -6382,8 +6382,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_173_p1.mp3",
@@ -6419,8 +6419,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_174_p1.mp3",
@@ -6456,8 +6456,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_175_p1.mp3",
@@ -6493,8 +6493,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_176_p1.mp3",
@@ -6515,7 +6515,7 @@
     "id": "vsn_177",
     "title": "फलश्रुतिः 33",
     "meter": "शाला",
-    "full": "कायेन वाचा मनसेन्द्रियैर्वा बुद्ध्यात्मना वा प्रकृतेः स्वभावात् । करोमि यद्यत् सकलं परस्मै नारायणायेति समर्पयामि ॥ ३३॥",
+    "full": "कायेन वाचा मनसेन्द्रियैर्वा बुद्ध्यात्मना वा प्रकृतेः स्वभावात् । करोमि यद्यत् सकलं परस्मै नारायणायेति समर्पयामि ॥ ३३॥ ॐ तत् सत्",
     "text": {
       "p1": "कायेन वाचा मनसेन्द्रियैर्वा",
       "p2": "बुद्ध्यात्मना वा प्रकृतेः स्वभावात् ।",
@@ -6530,8 +6530,8 @@
     },
     "needsSplitPractice": false,
     "available": {
-      "p12": false,
-      "p34": false
+      "p12": true,
+      "p34": true
     },
     "audio": {
       "p1": "vsn_177_p1.mp3",
@@ -6541,6 +6541,117 @@
       "p12": "vsn_177_p12.mp3",
       "p34": "vsn_177_p34.mp3",
       "full": "vsn_177_full.mp3"
+    },
+    "gloss": {
+      "sa": "",
+      "en": ""
+    },
+    "mode": "normal"
+  },
+  {
+    "id": "vsn_178",
+    "title": "क्षमाप्रार्थना 1",
+    "meter": "अनुष्टुप्",
+    "full": "यदक्षर-पदभ्रष्टं मात्रा-हीनन्तु यद्भवेत् ।तत्सर्वं क्षम्यतां देव नारायण नमोऽस्तुते ॥",
+    "text": {
+      "p1": "यदक्षर-पदभ्रष्टम्",
+      "p2": "मात्रा-हीनन्तु यद्भवेत् ।",
+      "p3": "तत्सर्वं क्षम्यतां देव",
+      "p4": "नारायण नमोऽस्तुते ॥१॥"
+    },
+    "practice": {
+      "p1": "यदक्षर-पदभ्रष्टम्",
+      "p2": "मात्रा-हीनन्तु यद्भवेत् ।",
+      "p3": "तत्सर्वं क्षम्यतां देव",
+      "p4": "नारायण नमोऽस्तुते ॥१॥"
+    },
+    "needsSplitPractice": false,
+    "available": {
+      "p12": true,
+      "p34": true
+    },
+    "audio": {
+      "p1": "vsn_178_p1.mp3",
+      "p2": "vsn_178_p2.mp3",
+      "p3": "vsn_178_p3.mp3",
+      "p4": "vsn_178_p4.mp3",
+      "p12": "vsn_178_p12.mp3",
+      "p34": "vsn_178_p34.mp3",
+      "full": "vsn_178_full.mp3"
+    },
+    "gloss": {
+      "sa": "",
+      "en": ""
+    },
+    "mode": "normal"
+  },
+  {
+    "id": "vsn_179",
+    "title": "क्षमाप्रार्थना 2",
+    "meter": "अनुष्टुप्",
+    "full": "विसर्ग-बिन्दु-मात्राणि पद-पादाक्षराणि च । न्यूनानि चातिरिक्तानि क्षमस्व पुरुषोत्तम ॥",
+    "text": {
+      "p1": "विसर्ग-बिन्दु-मात्राणि",
+      "p2": "पद-पादाक्षराणि च।",
+      "p3": "न्यूनानि चातिरिक्तानि",
+      "p4": "क्षमस्व पुरुषोत्तम ॥"
+    },
+    "practice": {
+      "p1": "विसर्ग-बिन्दु-मात्राणि",
+      "p2": "पद-पादाक्षराणि च।",
+      "p3": "न्यूनानि चातिरिक्तानि",
+      "p4": "क्षमस्व पुरुषोत्तम ॥"
+    },
+    "needsSplitPractice": false,
+    "available": {
+      "p12": true,
+      "p34": true
+    },
+    "audio": {
+      "p1": "vsn_179_p1.mp3",
+      "p2": "vsn_179_p2.mp3",
+      "p3": "vsn_179_p3.mp3",
+      "p4": "vsn_179_p4.mp3",
+      "p12": "vsn_179_p12.mp3",
+      "p34": "vsn_179_p34.mp3",
+      "full": "vsn_179_full.mp3"
+    },
+    "gloss": {
+      "sa": "",
+      "en": ""
+    },
+    "mode": "normal"
+  },
+  {
+    "id": "vsn_180",
+    "title": "क्षमाप्रार्थना 3",
+    "meter": "अनुष्टुप्",
+    "full": "अन्यथा शरणं नास्ति त्वमेव शरणं मम।तस्मात् कारुण्यभावेन रक्ष रक्ष जनार्दन॥",
+    "text": {
+      "p1": "अन्यथा शरणं नास्ति",
+      "p2": "त्वमेव शरणं मम।",
+      "p3": "तस्मात् कारुण्यभावेन",
+      "p4": "रक्ष रक्ष जनार्दन॥"
+    },
+    "practice": {
+      "p1": "अन्यथा शरणं नास्ति",
+      "p2": "त्वमेव शरणं मम।",
+      "p3": "तस्मात् कारुण्यभावेन",
+      "p4": "रक्ष रक्ष जनार्दन॥"
+    },
+    "needsSplitPractice": false,
+    "available": {
+      "p12": true,
+      "p34": true
+    },
+    "audio": {
+      "p1": "vsn_180_p1.mp3",
+      "p2": "vsn_180_p2.mp3",
+      "p3": "vsn_180_p3.mp3",
+      "p4": "vsn_180_p4.mp3",
+      "p12": "vsn_180_p12.mp3",
+      "p34": "vsn_180_p34.mp3",
+      "full": "vsn_180_full.mp3"
     },
     "gloss": {
       "sa": "",
